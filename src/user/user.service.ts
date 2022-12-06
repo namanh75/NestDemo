@@ -1,16 +1,18 @@
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { User } from '../entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from './created-user.dto';
+import { User } from './user.entity';
 
 @Injectable()
-export class AuthService {
+export class UserService {
   constructor(
     private readonly orm: MikroORM,
     private readonly em: EntityManager,
     @InjectRepository(User)
     private userRepository: EntityRepository<User>,
+    private jwtService: JwtService
   ) {}
 
   /**
@@ -35,9 +37,11 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    const jwt =await this.jwtService.sign({id:user.id})
     return {
       message: 'đăng nhập thành công',
-      access_token: 'accesstoken',
+      access_token: jwt,
+      redirect_URL: "/"
     };
   }
 
@@ -60,13 +64,11 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
 
-    
-
-    const { id, username, password } = user
+    const { id, username, password } = user;
     const data = new User(id, username, password);
     await this.userRepository.persistAndFlush(data);
     return {
-      message: ' đăng ký thành công',
+      message: 'Đăng ký thành công, vui lòng đăng nhập',
       data: data,
     };
   }
