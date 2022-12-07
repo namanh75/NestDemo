@@ -3,3 +3,8 @@ export class CreateUserDto {
   username: string;
   password: string;
 }
+
+export class CreateAccessTokenDto {
+  accesstoken: string;
+  isdelete: string;
+}

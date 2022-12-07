@@ -17,3 +17,17 @@ export class User {
     this.password = password;
   }
 }
+
+@Entity({ tableName: 'AccessToken' })
+export class AccessToken {
+  @PrimaryKey()
+  accesstoken: string;
+
+  @Property()
+  isdelete: string;
+
+  constructor(accesstoken: string, isdelete: string) {
+    this.accesstoken = accesstoken;
+    this.isdelete = isdelete;
+  }
+}
