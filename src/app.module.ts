@@ -3,7 +3,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostsModule } from './posts/posts.module';
-import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -11,13 +12,14 @@ import { UserModule } from './user/user.module';
     MikroOrmModule.forRoot({
       entities: ['./dist/entities'],
       entitiesTs: ['./src/entities'],
-      dbName: 'demo_nestjs',
       type: 'mysql',
-      password: '12345678',
+      dbName: "demo_nestjs",
+      password: "12345678",
       autoLoadEntities: true,
       logger: logger.log.bind(logger),
     }),
-    UserModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,7 +7,13 @@ export class AppService {
     private readonly orm: MikroORM,
     private readonly em: EntityManager,
   ) {}
-  getHello(): string {
-    return 'Hello World!';
+
+  info = {
+    name: 'Nam anh',
+    age: 22,
+  };
+
+  getHello(): any {
+    return this.info;
   }
 }
