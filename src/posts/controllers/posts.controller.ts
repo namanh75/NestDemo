@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { Get, Param, Post, Body, Delete, Query } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
-import { CreatePostDto } from '../dto/create-post.dto';
+import { PostDto } from '../dto/post.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -19,7 +19,7 @@ export class PostsController {
   }
 
   @Post()
-  async addPost(@Body() CreatePostDto: CreatePostDto) {
+  async addPost(@Body() CreatePostDto: PostDto) {
     const post = await this.postService.addPost(CreatePostDto);
     return post;
   }

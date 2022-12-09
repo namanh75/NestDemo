@@ -1,7 +1,7 @@
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreatePostDto } from '../dto/create-post.dto';
+import { PostDto } from '../dto/post.dto';
 import { Post } from '../entities/post.entity';
 
 @Injectable()
@@ -41,7 +41,7 @@ export class PostsService {
     return data;
   }
 
-  async addPost(post: CreatePostDto): Promise<Post> {
+  async addPost(post: PostDto): Promise<Post> {
     if (!post.id || !post.title) {
       throw new HttpException('ID or TITLE is emmty', HttpStatus.BAD_REQUEST);
     } else {

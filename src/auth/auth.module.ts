@@ -7,6 +7,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constant';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { AccessToken } from './entity/accesstoken.entity';
 
 @Module({
   imports: [
@@ -16,6 +18,7 @@ import { AuthController } from './auth.controller';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '1h' },
     }),
+    MikroOrmModule.forFeature([AccessToken]),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
