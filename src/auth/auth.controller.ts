@@ -1,8 +1,10 @@
 import {
   Controller,
   Get,
+  Param,
   Post,
   Request,
+  Res,
   Response,
   UseGuards,
 } from '@nestjs/common';
@@ -17,16 +19,26 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('/login')
-  async login(@Request() req): Promise<any> {
+  async login(@Request() req, @Res({ passthrough: true }) res): Promise<any> {
     const result = await this.authService.login(req.user);
     return result;
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get('/logout')
   async logout(@Request() req): Promise<ResponseDto> {
-    var access_token = req.headers.authorization.slice(7);
-    const result = await this.authService.logout(access_token);
+    var refresh_token = req.headers.authorization.slice(7);
+    const result = await this.authService.logout(refresh_token);
+    return result;
+  }
+
+  @Get('/refresh-token/:username')
+  async refreshToken(
+    @Request() req,
+    @Param('username') username,
+  ): Promise<ResponseDto> {
+    var refresh_token = req.headers.authorization.slice(7);
+    const result = await this.authService.refreshToken(username, refresh_token);
     return result;
   }
 }

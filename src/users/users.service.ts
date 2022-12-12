@@ -7,10 +7,11 @@ import {
   Injectable,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { AccessToken } from '../auth/entity/accesstoken.entity';
+import { RefreshToken } from '../auth/entity/refreshtoken.entity';
 import { UserDto } from './dto/users.dto';
 import { ResponseDto } from './dto/respone.dto';
 import { User } from './entities/users.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
@@ -19,8 +20,8 @@ export class UsersService {
     private readonly em: EntityManager,
     @InjectRepository(User)
     private userRepository: EntityRepository<User>,
-    @InjectRepository(AccessToken)
-    private accessTokenRepository: EntityRepository<AccessToken>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: EntityRepository<RefreshToken>,
   ) {}
 
   async findOne(username: string): Promise<any> {
@@ -31,16 +32,10 @@ export class UsersService {
   }
 
   async createNewUser(user: UserDto): Promise<any> {
-    if (!user.username || !user.password) {
-      throw new HttpException(
-        'Tên đăng nhập hoặc mật khẩu không được để trống',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     var sqlResult = await this.userRepository.findOne({
       username: user.username,
     });
+
     if (sqlResult)
       throw new HttpException(
         'Tên đăng nhập đã tồn tại trên hệ thống',
@@ -58,15 +53,22 @@ export class UsersService {
   }
 
   async getProfile(username: string): Promise<ResponseDto> {
-    var sqlResultToken = await this.accessTokenRepository.findOne({
-      username: username,
-    });
+    var sqlResultToken = await this.refreshTokenRepository
+      .findOne({
+        username: username,
+      })
     if (!sqlResultToken) {
-      throw new HttpException('Token không tồn tại', HttpStatus.BAD_REQUEST);
-    }
-    if (sqlResultToken.token_expired < new Date()) {
       throw new HttpException(
-        'Token đã hết hạn, vui lòng đăng nhập lại',
+        'Refresh token không tồn tại',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    console.log(username);
+    console.log(new Date(username));
+    console.log(sqlResultToken);
+    if (sqlResultToken.refresh_token_expired < new Date()) {
+      throw new HttpException(
+        'Refresh token đã hết hạn, vui lòng đăng nhập lại',
         HttpStatus.BAD_REQUEST,
       );
     }

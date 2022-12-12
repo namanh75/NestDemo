@@ -8,17 +8,18 @@ import { jwtConstants } from './constant';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { AccessToken } from './entity/accesstoken.entity';
+import { RefreshToken } from './entity/refreshtoken.entity';
+import { User } from 'src/users/entities/users.entity';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
+    MikroOrmModule.forFeature([RefreshToken, User]),
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '30m' },
     }),
-    MikroOrmModule.forFeature([AccessToken]),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],

@@ -15,10 +15,34 @@ In the file app.module.ts replace your Mysql
 
 ```bash
 # api register
-http://localhost:3001/api/users/register
+API: http://localhost:3000/users/register
+Method: POST
+Data: {
+    username:"username",
+    password:"password"
+} 
 
 # api login
-http://localhost:3001/api/auth/login
+http://localhost:3000/auth/login
+Method: POST
+Data: {
+    username:"username",
+    password:"password"
+} 
+Headers: {
+    'Authorization': 'Bearer ' + access_token
+}
 
 # api logout
-http://localhost:3001/api/auth/logout
+http://localhost:3000/auth/logout
+Method: GET
+Headers: {
+    'Authorization': 'Bearer ' + refresh_token
+}
+# api refresh token
+http://localhost:3000/auth/refresh-token/:username
+Method: GET
+Headers: {
+    'Authorization': 'Bearer ' + refresh_token
+}
+```

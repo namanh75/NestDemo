@@ -2,10 +2,12 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { AccessToken } from './entity/accesstoken.entity';
+import { RefreshToken } from './entity/refreshtoken.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ResponseDto } from 'src/users/dto/respone.dto';
+import { jwtConstants } from './constant';
+import { User } from 'src/users/entities/users.entity';
 const format = require('date-fns/format');
 
 @Injectable()
@@ -13,8 +15,10 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    @InjectRepository(AccessToken)
-    private accesstokenRepository: EntityRepository<AccessToken>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: EntityRepository<RefreshToken>,
+    @InjectRepository(User)
+    private userRepository: EntityRepository<User>
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {
@@ -29,42 +33,94 @@ export class AuthService {
   }
 
   async login(user: any): Promise<any> {
-    const payload = { username: user.username, sub: user.userId };
-    var jwt = this.jwtService.sign(payload);
+    const payload_access = {
+      username: user.username,
+      id: user.id,
+    };
+    const payload_refresh = {
+      username: user.username,
+      key: jwtConstants.secret,
+    };
+    var jwt_access = this.jwtService.sign(payload_access);
+    const jwt_refresh = this.jwtService.sign(payload_refresh);
 
     var datenow = new Date();
-    datenow.setDate(datenow.getDate() + 1);
+    datenow.setFullYear(datenow.getFullYear() + 1);
     const token_date = format(datenow, 'yyyy-MM-dd HH:mm:ss');
 
-    var { username, access_token_name, token_expired } = {
+    var { username, refresh_token_name, refresh_token_expired } = {
       username: user.username,
-      access_token_name: jwt,
-      token_expired: token_date,
+      refresh_token_name: jwt_refresh,
+      refresh_token_expired: token_date,
     };
 
-    const data = new AccessToken(username, access_token_name, token_expired);
-    await this.accesstokenRepository.persistAndFlush(data);
-    
-    return new ResponseDto(201, 'Đăng nhập thành công', data);
+    const data = new RefreshToken(
+      username,
+      refresh_token_name,
+      refresh_token_expired,
+    );
+    await this.refreshTokenRepository.persistAndFlush(data);
+    var res = Object.assign({ access_token_name: jwt_access }, data);
+    console.log(res);
+    return new ResponseDto(201, 'Đăng nhập thành công', res);
   }
 
-  async logout(access_token): Promise<ResponseDto> {
-    var sqlResultToken = await this.accesstokenRepository.findOne({
-      access_token_name: access_token,
+  async logout(refresh_token): Promise<ResponseDto> {
+    var sqlResultToken = await this.refreshTokenRepository.findOne({
+      refresh_token_name: refresh_token,
     });
     if (!sqlResultToken)
       throw new HttpException(
-        'Accesstoken không tồn tại trên hệ thống',
+        'Refresh token không tồn tại, người dùng chưa đăng nhập',
         HttpStatus.BAD_REQUEST,
       );
 
-    var datenow = new Date();
-    sqlResultToken.token_expired = datenow;
-    await this.accesstokenRepository.persistAndFlush(sqlResultToken);
+    var date_now = new Date();
+    sqlResultToken.refresh_token_expired = date_now;
+    await this.refreshTokenRepository.persistAndFlush(sqlResultToken);
     return new ResponseDto(
       200,
       'Đã đăng xuất thành công, token không còn được sử dụng được tiếp',
       null,
     );
+  }
+
+  async refreshToken(user_name, refresh_token_name): Promise<any> {
+    var sqlResultToken = await this.refreshTokenRepository.findOne({
+      username: user_name,
+      refresh_token_name: refresh_token_name
+    });
+    if (!sqlResultToken) {
+      throw new HttpException(
+        'Refresh token không tồn tại, vui lòng đăng nhập lại',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (sqlResultToken.refresh_token_expired < new Date()) {
+      throw new HttpException(
+        'Refresh token đã hết hạn, vui lòng đăng nhập lại',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    var user = await this.userRepository.findOne({
+      username: user_name,
+    });
+    const payload_access = {
+      username: user.username,
+      id: user.id,
+    };
+    const payload_refresh = {
+      username: user.username,
+      key: jwtConstants.secret,
+    };
+    var jwt_access = this.jwtService.sign(payload_access);
+    var jwt_refresh = this.jwtService.sign(payload_refresh);
+    var result ={
+      access_token:jwt_access,
+      refresh_token:jwt_refresh,
+    }
+
+    return new ResponseDto(200, 'Thành công', result);
   }
 }
