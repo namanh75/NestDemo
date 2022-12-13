@@ -1,4 +1,9 @@
-import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
+import {
+  EntityManager,
+  EntityRepository,
+  MikroORM,
+  QueryOrder,
+} from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   ConsoleLogger,
@@ -53,10 +58,15 @@ export class UsersService {
   }
 
   async getProfile(username: string): Promise<ResponseDto> {
-    var sqlResultToken = await this.refreshTokenRepository
-      .findOne({
+    var sqlResultToken = await this.refreshTokenRepository.findOne(
+      {
         username: username,
-      })
+      },
+      {
+        orderBy: { refresh_token_expired: QueryOrder.DESC },
+      },
+    );
+    console.log(sqlResultToken);
     if (!sqlResultToken) {
       throw new HttpException(
         'Refresh token không tồn tại',

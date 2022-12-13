@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RefreshToken } from './entity/refreshtoken.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository, QueryOrder } from '@mikro-orm/core';
 import { ResponseDto } from 'src/users/dto/respone.dto';
 import { jwtConstants } from './constant';
 import { User } from 'src/users/entities/users.entity';
@@ -18,7 +18,7 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: EntityRepository<RefreshToken>,
     @InjectRepository(User)
-    private userRepository: EntityRepository<User>
+    private userRepository: EntityRepository<User>,
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {
@@ -65,10 +65,15 @@ export class AuthService {
     return new ResponseDto(201, 'Đăng nhập thành công', res);
   }
 
-  async logout(refresh_token): Promise<ResponseDto> {
-    var sqlResultToken = await this.refreshTokenRepository.findOne({
-      refresh_token_name: refresh_token,
-    });
+  async logout(username): Promise<ResponseDto> {
+    var sqlResultToken = await this.refreshTokenRepository.findOne(
+      {
+        username: username,
+      },
+      {
+        orderBy: { refresh_token_expired: QueryOrder.DESC },
+      },
+    );
     if (!sqlResultToken)
       throw new HttpException(
         'Refresh token không tồn tại, người dùng chưa đăng nhập',
@@ -88,7 +93,7 @@ export class AuthService {
   async refreshToken(user_name, refresh_token_name): Promise<any> {
     var sqlResultToken = await this.refreshTokenRepository.findOne({
       username: user_name,
-      refresh_token_name: refresh_token_name
+      refresh_token_name: refresh_token_name,
     });
     if (!sqlResultToken) {
       throw new HttpException(
@@ -116,10 +121,10 @@ export class AuthService {
     };
     var jwt_access = this.jwtService.sign(payload_access);
     var jwt_refresh = this.jwtService.sign(payload_refresh);
-    var result ={
-      access_token:jwt_access,
-      refresh_token:jwt_refresh,
-    }
+    var result = {
+      access_token: jwt_access,
+      refresh_token: jwt_refresh,
+    };
 
     return new ResponseDto(200, 'Thành công', result);
   }

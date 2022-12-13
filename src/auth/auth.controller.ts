@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { ResponseDto } from 'src/users/dto/respone.dto';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { LocalAuthGuard } from './local-auth.guard';
 
 @Controller('auth')
@@ -25,10 +24,9 @@ export class AuthController {
   }
 
   // @UseGuards(JwtAuthGuard)
-  @Get('/logout')
-  async logout(@Request() req): Promise<ResponseDto> {
-    var refresh_token = req.headers.authorization.slice(7);
-    const result = await this.authService.logout(refresh_token);
+  @Get('/logout/:username')
+  async logout(@Request() req, @Param('username') username): Promise<ResponseDto> {
+    const result = await this.authService.logout(username);
     return result;
   }
 
